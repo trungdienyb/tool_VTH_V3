@@ -1,7 +1,6 @@
 from email import header
 import requests, json, os
 import time
-from logic import *
 import asyncio
 import json
 import websockets
@@ -227,4 +226,5 @@ def run_second_ws(data):
 #         "user_secret_key":secret_key,
 #             }
 # print(run_second_ws(data_ws))
+
 
