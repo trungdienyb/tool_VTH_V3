@@ -2,9 +2,6 @@ import queue
 import time,os,sys
 import random
 from collections import deque
-
-from api import*
-from rich_process import *
 import rich
 from rich.status import Status
 from rich.console import Console
@@ -15,7 +12,6 @@ from rich.progress import Progress
 import threading
 from threading import *
 from rich.live import Live
-from config import *
 console = Console(log_path=False, log_time=True)
 
 def clearConsole():
@@ -300,3 +296,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
