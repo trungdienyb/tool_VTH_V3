@@ -1,4 +1,64 @@
 #!/bin/python3.12
+import importlib
+import sys
+import subprocess
+from typing import Dict, Tuple
+
+def _try_pip_install(pkg: str) -> Tuple[bool, str]:
+    cmd = [sys.executable, "-m", "pip", "install", pkg]
+    try:
+        subprocess.check_call(cmd)
+        return True, f"Đã cài: {pkg}"
+    except subprocess.CalledProcessError as e:
+        # Thử lại bằng --user nếu có thể
+        try:
+            subprocess.check_call(cmd + ["--user"])
+            return True, f"Đã cài (với --user): {pkg}"
+        except subprocess.CalledProcessError as e2:
+            return False, f"Cài {pkg} thất bại. Lỗi: {e2}"
+    except FileNotFoundError:
+        return False, "Không tìm thấy trình pip. Hãy đảm bảo Python đã cài pip."
+
+def ensure_deps():
+    # map: tên module để import -> tên package pip
+    required: Dict[str, str] = {
+        "bs4": "beautifulsoup4",   # BeautifulSoup
+        "ping3": "ping3",
+        "websockets": "websockets",
+        "rich": "rich",
+    }
+
+    missing = []
+    for mod_name in required.keys():
+        try:
+            importlib.import_module(mod_name)
+        except Exception:
+            missing.append(mod_name)
+
+    if not missing:
+        print("✅ Tất cả thư viện đã sẵn sàng.")
+        return
+
+    print("⚠️ Thiếu thư viện:", ", ".join(missing))
+    print("⏳ Tiến hành cài đặt...")
+
+    any_installed = False
+    for mod_name in missing:
+        pkg = required[mod_name]
+        ok, msg = _try_pip_install(pkg)
+        print(("✅ " if ok else "❌ ") + msg)
+        any_installed = any_installed or ok
+
+    if any_installed:
+        print("\n🎉 Cài đặt hoàn tất cho các gói thiếu.")
+        print("👉 Vui lòng **chạy lại chương trình** để nạp môi trường mới.")
+        sys.exit(0)
+    else:
+        print("\n❌ Không thể tự cài các gói. Hãy thử:")
+        print(f"   {sys.executable} -m pip install " + " ".join(required[m] for m in missing))
+        Không exit để bạn còn thấy log lỗi; tùy ý:
+        sys.exit(1)
+ensure_deps()
 # -*- coding: utf-8 -*-
 __OWN__ = "Nguyễn Xuân Trịnh & Phạm Anh Tiến"
 __OBF__ = "PyHydra"
