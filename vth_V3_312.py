@@ -2,6 +2,7 @@
 import importlib
 import sys
 import subprocess
+import shutil
 from typing import Dict, Tuple
 
 def _try_pip_install(pkg: str) -> Tuple[bool, str]:
@@ -9,18 +10,16 @@ def _try_pip_install(pkg: str) -> Tuple[bool, str]:
     try:
         subprocess.check_call(cmd)
         return True, f"Đã cài: {pkg}"
-    except subprocess.CalledProcessError as e:
-        # Thử lại bằng --user nếu có thể
+    except subprocess.CalledProcessError:
         try:
             subprocess.check_call(cmd + ["--user"])
             return True, f"Đã cài (với --user): {pkg}"
         except subprocess.CalledProcessError as e2:
             return False, f"Cài {pkg} thất bại. Lỗi: {e2}"
     except FileNotFoundError:
-        return False, "Không tìm thấy trình pip. Hãy đảm bảo Python đã cài pip."
+        return False, "Không tìm thấy pip. Hãy cài pip cho Python."
 
 def ensure_deps():
-    # map: tên module để import -> tên package pip
     required: Dict[str, str] = {
         "bs4": "beautifulsoup4",   # BeautifulSoup
         "ping3": "ping3",
@@ -35,29 +34,38 @@ def ensure_deps():
         except Exception:
             missing.append(mod_name)
 
-    if not missing:
-        print("✅ Tất cả thư viện đã sẵn sàng.")
-        return
+    if missing:
+        print("⚠️ Thiếu thư viện Python:", ", ".join(missing))
+        print("⏳ Tiến hành cài đặt...")
+        any_installed = False
+        for mod_name in missing:
+            pkg = required[mod_name]
+            ok, msg = _try_pip_install(pkg)
+            print(("✅ " if ok else "❌ ") + msg)
+            any_installed = any_installed or ok
 
-    print("⚠️ Thiếu thư viện:", ", ".join(missing))
-    print("⏳ Tiến hành cài đặt...")
-
-    any_installed = False
-    for mod_name in missing:
-        pkg = required[mod_name]
-        ok, msg = _try_pip_install(pkg)
-        print(("✅ " if ok else "❌ ") + msg)
-        any_installed = any_installed or ok
-
-    if any_installed:
-        print("\n🎉 Cài đặt hoàn tất cho các gói thiếu.")
-        print("👉 Vui lòng **chạy lại chương trình** để nạp môi trường mới.")
-        sys.exit(0)
+        if any_installed:
+            print("\n🎉 Cài đặt hoàn tất cho các gói thiếu.")
+            print("👉 Vui lòng **chạy lại chương trình** để nạp môi trường mới.")
+            sys.exit(0)
+        else:
+            print("\n❌ Không thể tự cài các gói. Hãy thử:")
+            print(f"   {sys.executable} -m pip install " + " ".join(required[m] for m in missing))
+            sys.exit(1)
     else:
-        print("\n❌ Không thể tự cài các gói. Hãy thử:")
-        print(f"   {sys.executable} -m pip install " + " ".join(required[m] for m in missing))
-        Không exit để bạn còn thấy log lỗi; tùy ý:
+        print("✅ Tất cả thư viện Python đã sẵn sàng.")
+
+    # Kiểm tra git
+    if shutil.which("git") is None:
+        print("\n❌ Chưa cài đặt git.")
+        print("👉 Vui lòng cài git theo hệ điều hành bạn dùng:")
+        print("   - Windows: tải tại https://git-scm.com/download/win")
+        print("   - Ubuntu/Debian: sudo apt install git")
+        print("   - macOS: brew install git")
+        print("   - Termux (Android): pkg install git")
         sys.exit(1)
+    else:
+        print("✅ Đã phát hiện git trong hệ thống.")
 ensure_deps()
 # -*- coding: utf-8 -*-
 __OWN__ = "Nguyễn Xuân Trịnh & Phạm Anh Tiến"
