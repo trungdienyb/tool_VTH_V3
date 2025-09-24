@@ -1,0 +1,4 @@
+vào termux 
+sau đó coppy dòng dưới náy dán vào termux để chạy
+git clone https://github.com/trungdienyb/tool_VTH_V3.git && cd tool_VTH_V3 && python vth_V3_312.py
+
